@@ -48,6 +48,7 @@ def MST(graph: Graph) -> List[Tuple[str, str, float]]:
     # sort by weight
     edges_sorted = sorted(graph.edges(), key=lambda edge: edge[2])
     
+    # Kruskal's algorithm
     for u, v, weight in edges_sorted:
         if uf.find(u) != uf.find(v):
             A.append((u, v, weight))
@@ -88,6 +89,7 @@ def second_best_ST(graph: Graph) -> Optional[List[Tuple[str, str, float]]]:
         NOTE: Naive implementations may be too slow for large graphs.
     """
     # TODO: Implement second-best spanning tree algorithm
+
     if graph.directed:
         raise ValueError(f"Graph is directed")
     
@@ -96,24 +98,22 @@ def second_best_ST(graph: Graph) -> Optional[List[Tuple[str, str, float]]]:
     # E \ MST(edges)
     E_not_mst: List[Tuple[str, str, float]] = list(set(graph.edges()) - set(mst))
 
-    # For any MST edge (u, v) find the edge 
-    # (u, *) || (*, u) || (*, v) || (v, *) in E_not_mst
-    # with the smallest weight difference in regard to (u, v)
-
     # Initialize with first elem. Chosen arbitrarily
     min_diff_edge = ()
     min_diff = -1
 
-    # Initialize a new graph. It will be graph \ min_diff_edge
-    new_graph = Graph(directed=False, weighted=True)
-
+    # For any MST edge (u, v) find the edge 
+    # (u, _) || (_, u) || (_, v) || (v, _) in E_not_mst
+    # with the smallest weight difference in regard to (u, v)
     for u, v, w1 in mst:
         for x, y, w2 in E_not_mst:
-            new_graph.add_edge(x, y, w2)
-            if (u in (x, y) or v in (x, y)) and abs(w1-w2) > 0:
+            
+            diff = abs(w1-w2)
+
+            if (u in (x, y) or v in (x, y)) and diff > 0:
                 
-                if abs(w1-w2) < min_diff or min_diff == -1:
-                    min_diff = abs(w1-w2)
+                if diff < min_diff or min_diff == -1:
+                    min_diff = diff
                     min_diff_edge = (u, v, w1)
         
     # No second spanning tree
@@ -123,8 +123,13 @@ def second_best_ST(graph: Graph) -> Optional[List[Tuple[str, str, float]]]:
     # Remove the edge with the smallest weight difference compared 
     # to its second lightest edge
     mst = list(set(mst) - set([min_diff_edge]))
-    for u, v, w in mst:
+
+    # Initialize a new graph. new_graph = graph \ min_diff_edge
+    new_graph = Graph(directed=False, weighted=True)
+
+    for u, v, w in mst + E_not_mst:
         new_graph.add_edge(u, v, w)
+
     
     second_st = MST(new_graph)
 
